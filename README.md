@@ -5,6 +5,8 @@ It is implemented as a **Hadoop Mapreduce** job. This application and the associ
 
 The purpose of my repository is more to give an exhaustive description of the process of running this *mapreduce* program with [Apache Hadoop](http://hadoop.apache.org/) than expose the algorithm and the source code.
 
+Besides, I also translated the Java code in Scala code.
+
 Some basic information about my configuration:
 
 |   |   |
@@ -12,27 +14,31 @@ Some basic information about my configuration:
 | **OS**      | Linux 64 bits, Fedora 25 |
 | **Hadoop**  | version 2.7.3            |
 | **openjdk** | version 1.8.0_121        |
-
+| **scala**   | version 2.10.4           |
 
 ## Content of the repository
 
 | directory  | Content  |
 |------------|----------|
 | `./data`   | Raw text files `1901` and `1902` with weather data from the NCDC |
-| `./src`    | Java source code                                                 |
+| `./java`   | Java source code and Makefile                                    |
+| `./scala`  | Java source code and Makefile                                    |
 
 
 ## Compile the Java source code
 The Java source code is composed of the 3 `.java` files:  
-`./src/MaxTemperature.java`    
-`./src/MaxTemperatureMapper.java`  
-`./src/MaxTemperatureReducer.java`  
+`./java/MaxTemperature.java`    
+`./java/MaxTemperatureMapper.java`  
+`./java/MaxTemperatureReducer.java`  
 
 It can be compiled with GNU `make`. The `Makefile` needs the environment variable `$HADOOP_HOME` to be defined. Run GNU `make` in the `./src ` directory:  
 `$> make`  
 or  
 `$> make -f Makefile`  
 A Java archive (.jar) `MaxTemperature.jar` is then created in the `./src` directory.
+
+## Compile the Scala source code
+There is also a specific Makefile for that purpose using `scalac` instead of `javac`.
 
 ## Run the Mapreduce job on Hadoop
 
@@ -63,9 +69,11 @@ Check the copied files on the HDFS:
 `$> hadoop fs -ls /user/flaudanum/input`
 
 ### Run the Mapreduce job
-Now that the data is on the HDFS, it is time to run the Mapreduce job with the `hadoop jar` command:
-`$> hadoop jar ./src/MaxTemperature.jar MaxTemperature /user/flaudanum/input /user/flaudanum/output`
-The shell output of the command is available [here](hadoop.jar.md)
+Now that the data is on the HDFS, it is time to run the Mapreduce job with the `hadoop jar` command:  
+`$> hadoop jar ./java/MaxTemperature.jar MaxTemperature /user/flaudanum/input /user/flaudanum/output`  
+The shell output of the command is available [here](hadoop.jar.md)  
+Running the job with the JAR file created with the Scala code is done the same way:
+`$> hadoop jar ./scalac/MaxTemperature.jar MaxTemperature /user/flaudanum/input /user/flaudanum/output`  
 
 **Beware** If you run hadoop in standalone (local) mode like me, you shall check in the `mapred-site.xml` in hadoop install directory that the value associated to the property `mapreduce.framework.name` is set to `local` (my default value was `yarn`). Here is the content of my file `mapred-site.xml`:  
 ```XML
