@@ -14,31 +14,40 @@ Some basic information about my configuration:
 | **OS**      | Linux 64 bits, Fedora 25 |
 | **Hadoop**  | version 2.7.3            |
 | **openjdk** | version 1.8.0_121        |
-| **scala**   | version 2.10.4           |
+| **Maven**   | version 3.3.9            |
 
 ## Content of the repository
+The directory structure is compatible with **Apache Maven** standard ([more details](https://maven.apache.org/guides/getting-started/)).
 
-| directory  | Content  |
-|------------|----------|
-| `./data`   | Raw text files `1901` and `1902` with weather data from the NCDC |
-| `./java`   | Java source code and Makefile                                    |
-| `./scala`  | Java source code and Makefile                                    |
+| directory           | Content  |
+|---------------------|----------|
+| `./data`            | Raw text files `1901` and `1902` with weather data from the NCDC |
+| `./src/main/java`   | Java source code and Makefile                                    |
+| `./pom.xml`         | Project Object Model XML file for Maven                          |
 
-
-## Compile the Java source code
+## Compile the Java source code and create a JAR
 The Java source code is composed of the 3 `.java` files:  
 `./java/MaxTemperature.java`    
 `./java/MaxTemperatureMapper.java`  
 `./java/MaxTemperatureReducer.java`  
 
-It can be compiled with GNU `make`. The `Makefile` needs the environment variable `$HADOOP_HOME` to be defined. Run GNU `make` in the `./src ` directory:  
+It can be compiled with GNU `make`. The `Makefile` needs the environment variable `$HADOOP_HOME` to be defined.
+Run GNU `make` in the `./src/main/java` directory where the .java source files are:  
 `$> make`  
 or  
 `$> make -f Makefile`  
-A Java archive (.jar) `MaxTemperature.jar` is then created in the `./src` directory.
+A Java archive (JAR) `MaxTemperature.jar` is then created in the `./src/main/java` directory.
 
-## Compile the Scala source code
-There is also a specific Makefile for that purpose using `scalac` instead of `javac`.
+## Use Apache Maven
+In the root directory `./`, there is the `pom.xml` for the **Maven** project to be built. This `pom.xml` exhibits a
+basic structure for building a *MapReduce* job for *Hadoop*. Comments in the file give short descriptions of the
+meaning of the various XML elements.
+
+From the root directory, run:  
+`$> mvn clean` for cleaning a pre-existing build  
+`$> mvn compile` for compiling the .java source files into .class files  
+`$> mvn package` for creating the Java archive (JAR)
+
 
 ## Run the Mapreduce job on Hadoop
 
@@ -69,31 +78,19 @@ Check the copied files on the HDFS:
 `$> hadoop fs -ls /user/flaudanum/input`
 
 ### Run the Mapreduce job
-Now that the data is on the HDFS, it is time to run the Mapreduce job with the `hadoop jar` command:  
+Now that the data is on the HDFS, it is time to run the Mapreduce job with the `hadoop jar` command.
+If you built the JAR with GNU make then the JAR should be in `./src/main/java`. Change to that directory and run:  
 `$> hadoop jar ./java/MaxTemperature.jar MaxTemperature /user/flaudanum/input /user/flaudanum/output`  
-The shell output of the command is available [here](hadoop.jar.md)  
-Running the job with the JAR file created with the Scala code is done the same way:
-`$> hadoop jar ./scalac/MaxTemperature.jar MaxTemperature /user/flaudanum/input /user/flaudanum/output`  
+If you built the JAR with Maven then it should be directly in the root directory.
 
-**Beware** If you run hadoop in standalone (local) mode like me, you shall check in the `mapred-site.xml` in hadoop install directory that the value associated to the property `mapreduce.framework.name` is set to `local` (my default value was `yarn`). Here is the content of my file `mapred-site.xml`:  
+The shell output of the command is available [here](hadoop.jar.md)  
+
+**Beware** If you run hadoop in standalone (local) mode like me, you shall check in the `mapred-site.xml` in hadoop
+install directory that the value associated to the property `mapreduce.framework.name` is set to `local` (my default
+value was `yarn`). Here is the content of my file `mapred-site.xml`:  
 ```XML
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<!--
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License. See accompanying LICENSE file.
--->
-
-<!-- Put site-specific property overrides in this file. -->
 
 <configuration>
 <!--    <property>-->
@@ -120,3 +117,6 @@ The content of this file can be streamed to the standard output:
 `$> hadoop fs -cat /user/flaudanum/output/part-r-00000`  
 The data file can also be transfered to the directory `./hadoop_res` in the local file system:  
 `$> hadoop fs -get /user/flaudanum/output/ ./hadoop_res`
+
+**Remark** Before running again the MapReduce job, remove the output directory, otherwise Hadoop will send an error:  
+`$> hadoop fs -rm -r /user/flaudanum/output`
